@@ -1,0 +1,12 @@
+{
+  "ID": "9E1B7C4A-5D2F-4B8E-9C3A-1F6D2E8B4A70",
+  "ActionKeyword": "dt",
+  "Name": "DualTran Translate",
+  "Description": "Translate the typed text into your language with Google or your own AI model",
+  "Author": "seigwen",
+  "Version": "0.1.0",
+  "Language": "python",
+  "Website": "https://github.com/seigwen/dualtran-flow",
+  "IcoPath": "icon.png",
+  "ExecuteFileName": "main.py"
+}
