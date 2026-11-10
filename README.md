@@ -30,9 +30,9 @@ Create `settings.json` next to `main.py` (missing values fall back to the defaul
 
 ## Status
 
-- 12 unit tests (`python -m pytest`), and the JSON-RPC contract is exercised directly:
+- 14 unit tests (`python -m pytest`), and the JSON-RPC contract is exercised directly:
   `echo '{"method":"query","parameters":[""],"id":1}' | python main.py` returns a valid result.
-- **Not yet verified inside Flow Launcher itself** — the host app is not installed here.
+- Verified inside Flow Launcher 2.1.4 on Windows: the plugin loads, `dt good morning` returns `早上好`, and Enter copies it. Flow Launcher passes the JSON request in `argv[1]` (not stdin); the entry point accepts both shapes.
 
 ## Licence
 
