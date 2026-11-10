@@ -4,7 +4,7 @@
   "Name": "DualTran Translate",
   "Description": "Translate the typed text into your language with Google or your own AI model",
   "Author": "seigwen",
-  "Version": "0.1.0",
+  "Version": "0.1.1",
   "Language": "python",
   "Website": "https://github.com/seigwen/dualtran-flow",
   "IcoPath": "icon.png",

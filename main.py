@@ -83,7 +83,44 @@ def copy_to_clipboard(text: str) -> bool:
         return False
 
 
+def dispatch(request: dict) -> dict:
+    method = request.get("method")
+    parameters = request.get("parameters") or []
+    try:
+        if method == "query":
+            payload = query(parameters[0] if parameters else "")
+        elif method == "copy_to_clipboard":
+            payload = copy_to_clipboard(parameters[0] if parameters else "")
+        else:
+            payload = []
+    except Exception:
+        payload = [
+            {
+                "Title": "DualTran error",
+                "SubTitle": traceback.format_exc(limit=1).strip().replace("\n", " "),
+                "IcoPath": "icon.png",
+            }
+        ]
+    return {"result": payload, "id": request.get("id")}
+
+
+def emit(request: dict) -> None:
+    sys.stdout.write(json.dumps(dispatch(request), ensure_ascii=False) + "\n")
+    sys.stdout.flush()
+
+
 def main() -> None:
+    # Flow Launcher launches a Python plugin with the JSON request as argv[1]
+    # (not on stdin). Accept both shapes: the argv form is what the host uses,
+    # the stdin form keeps the documented JSON-RPC contract and unit tests.
+    if len(sys.argv) > 1 and sys.argv[1].strip().startswith("{"):
+        try:
+            request = json.loads(sys.argv[1])
+        except json.JSONDecodeError:
+            return
+        emit(request)
+        return
+
     for line in sys.stdin:
         line = line.strip()
         if not line:
@@ -92,29 +129,7 @@ def main() -> None:
             request = json.loads(line)
         except json.JSONDecodeError:
             continue
-
-        method = request.get("method")
-        parameters = request.get("parameters") or []
-        try:
-            if method == "query":
-                payload = query(parameters[0] if parameters else "")
-            elif method == "copy_to_clipboard":
-                payload = copy_to_clipboard(parameters[0] if parameters else "")
-            else:
-                payload = []
-        except Exception:
-            payload = [
-                {
-                    "Title": "DualTran error",
-                    "SubTitle": traceback.format_exc(limit=1).strip().replace("\n", " "),
-                    "IcoPath": "icon.png",
-                }
-            ]
-
-        sys.stdout.write(
-            json.dumps({"result": payload, "id": request.get("id")}, ensure_ascii=False) + "\n"
-        )
-        sys.stdout.flush()
+        emit(request)
 
 
 if __name__ == "__main__":
