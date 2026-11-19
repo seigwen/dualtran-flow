@@ -8,9 +8,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import main
 
 
+def test_request_settings_override_file(tmp_path, monkeypatch):
+    settings_file = tmp_path / "settings.json"
+    settings_file.write_text(json.dumps({"target": "ja", "model": "file-model"}), encoding="utf-8")
+    monkeypatch.setattr(main, "SETTINGS_FILE", str(settings_file))
+
+    settings = main.load_settings({"target": "de", "model": "request-model"})
+
+    assert settings["target"] == "de"
+    assert settings["model"] == "request-model"
+    assert settings["engine"] == "google"
+
+
 def test_argv_mode_serves_the_query(monkeypatch, capsys):
     """Flow Launcher launches Python plugins with the JSON request in argv[1]."""
-    monkeypatch.setattr(main, "query", lambda text: [{"Title": text}])
+    monkeypatch.setattr(main, "query", lambda text, settings=None: [{"Title": text}])
     monkeypatch.setattr(
         sys,
         "argv",
@@ -25,7 +37,7 @@ def test_argv_mode_serves_the_query(monkeypatch, capsys):
 
 
 def test_stdin_mode_still_works(monkeypatch, capsys):
-    monkeypatch.setattr(main, "query", lambda text: [{"Title": text}])
+    monkeypatch.setattr(main, "query", lambda text, settings=None: [{"Title": text}])
     monkeypatch.setattr(sys, "argv", ["main.py"])
     monkeypatch.setattr(
         sys,

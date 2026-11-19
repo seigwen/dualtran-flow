@@ -18,23 +18,64 @@ SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settin
 DEFAULTS = {
     "engine": "google",
     "target": "zh-CN",
-    "endpoint": "https://api.openai.com/v1",
+    "endpoint": "",
     "api_key": "",
-    "model": "gpt-4o-mini",
+    "model": "",
+    "provider": "Select a provider",
+    "reasoning": "lowest",
 }
 
+CATALOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog.json")
+try:
+    with open(CATALOG_FILE, encoding="utf-8") as _handle:
+        _catalog = json.load(_handle)
+    PROVIDERS = {item["label"]: item for item in _catalog.get("providers", [])}
+except (FileNotFoundError, json.JSONDecodeError):
+    PROVIDERS = {}
 
-def load_settings() -> dict:
+
+def _language_code(value: str) -> str:
+    value = (value or "").strip()
+    if "(" in value and value.endswith(")"):
+        return value[value.rfind("(") + 1 : -1]
+    return value
+
+
+def resolve_settings(settings: dict) -> dict:
+    """Turn the human-readable dropdown labels into the values the request needs."""
+    resolved = dict(settings)
+    resolved["target"] = _language_code(str(resolved.get("target") or "zh-CN"))
+    provider = PROVIDERS.get(str(resolved.get("provider") or ""))
+    if provider:
+        if not str(resolved.get("endpoint") or "").strip():
+            resolved["endpoint"] = provider["endpoint"]
+        model_label = str(resolved.get("model") or "")
+        model = next((m for m in provider["models"] if m["label"] == model_label), None)
+        if model is None and provider["models"]:
+            model = provider["models"][0]
+        if model is not None:
+            resolved["model"] = model["id"]
+    return resolved
+
+
+def load_settings(overrides: dict | None = None) -> dict:
     settings = dict(DEFAULTS)
     try:
         with open(SETTINGS_FILE, encoding="utf-8") as handle:
             settings.update(json.load(handle))
     except (FileNotFoundError, json.JSONDecodeError):
         pass
+    # Flow Launcher passes the values from SettingsTemplate.yaml in the JSON-RPC
+    # request. They win over the legacy settings.json so the new settings page is
+    # the single source of truth; settings.json stays as a fallback for older
+    # Flow versions and for headless tests.
+    for key in DEFAULTS:
+        if isinstance(overrides, dict) and key in overrides:
+            settings[key] = overrides[key]
     return settings
 
 
-def query(text: str) -> list[dict]:
+def query(text: str, settings: dict | None = None) -> list[dict]:
     cleaned = (text or "").strip()
     if not cleaned:
         return [
@@ -45,7 +86,7 @@ def query(text: str) -> list[dict]:
             }
         ]
 
-    settings = load_settings()
+    settings = resolve_settings(settings or load_settings())
     try:
         result = translate(
             cleaned,
@@ -54,6 +95,7 @@ def query(text: str) -> list[dict]:
             endpoint=settings["endpoint"],
             api_key=settings["api_key"],
             model=settings["model"],
+            reasoning=settings.get("reasoning", "lowest"),
         )
     except TranslationError as error:
         return [{"Title": "Translation failed", "SubTitle": str(error), "IcoPath": "icon.png"}]
@@ -88,7 +130,10 @@ def dispatch(request: dict) -> dict:
     parameters = request.get("parameters") or []
     try:
         if method == "query":
-            payload = query(parameters[0] if parameters else "")
+            payload = query(
+                parameters[0] if parameters else "",
+                load_settings(request.get("settings")),
+            )
         elif method == "copy_to_clipboard":
             payload = copy_to_clipboard(parameters[0] if parameters else "")
         else:

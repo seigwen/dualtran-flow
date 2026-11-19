@@ -36,8 +36,8 @@ def chat_completions_url(endpoint: str) -> str:
     return f"{base}/v1/chat/completions"
 
 
-def build_chat_payload(model: str, text: str, target: str) -> dict[str, Any]:
-    return {
+def build_chat_payload(model: str, text: str, target: str, reasoning: str = "lowest") -> dict[str, Any]:
+    payload: dict[str, Any] = {
         "model": model,
         "temperature": 0,
         "stream": False,
@@ -53,6 +53,11 @@ def build_chat_payload(model: str, text: str, target: str) -> dict[str, Any]:
             {"role": "user", "content": text},
         ],
     }
+    # "lowest" means "do not send an effort field"; providers that do not know
+    # reasoning_effort keep working. The other values are forwarded verbatim.
+    if reasoning and reasoning != "lowest":
+        payload["reasoning_effort"] = reasoning
+    return payload
 
 
 def parse_chat_response(payload: Any) -> str:
@@ -110,6 +115,7 @@ def translate(
     endpoint: str = "https://api.openai.com/v1",
     api_key: str = "",
     model: str = "gpt-4o-mini",
+    reasoning: str = "lowest",
 ) -> str:
     cleaned = (text or "").strip()
     if not cleaned:
@@ -119,6 +125,6 @@ def translate(
         headers = {"Content-Type": "application/json"}
         if api_key:
             headers["Authorization"] = f"Bearer {api_key}"
-        payload = build_chat_payload(model, cleaned, target)
+        payload = build_chat_payload(model, cleaned, target, reasoning)
         return parse_chat_response(_request(url, json.dumps(payload).encode("utf-8"), headers))
     return parse_google_response(_request(google_url(cleaned, target), None, {}))

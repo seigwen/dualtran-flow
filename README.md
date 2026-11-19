@@ -16,21 +16,14 @@ translation and Enter copies it.
 
 ## Configure
 
-Create `settings.json` next to `main.py` (missing values fall back to the defaults):
-
-```json
-{
-  "engine": "google",
-  "target": "zh-CN",
-  "endpoint": "https://api.openai.com/v1",
-  "api_key": "",
-  "model": "gpt-4o-mini"
-}
-```
+Open **Flow Launcher → Settings → Plugins → DualTran Translate**. The plugin ships a
+`SettingsTemplate.yaml`, so Flow renders Engine, Target language, API endpoint, API key, Model
+and Reasoning effort. Values are passed in the JSON-RPC request and take precedence over the
+legacy `settings.json` (kept as a fallback for older Flow builds and headless tests).
 
 ## Status
 
-- 14 unit tests (`python -m pytest`), and the JSON-RPC contract is exercised directly:
+- 16 unit tests (`python -m pytest`), and the JSON-RPC contract is exercised directly:
   `echo '{"method":"query","parameters":[""],"id":1}' | python main.py` returns a valid result.
 - Verified inside Flow Launcher 2.1.4 on Windows: the plugin loads, `dt good morning` returns `早上好`, and Enter copies it. Flow Launcher passes the JSON request in `argv[1]` (not stdin); the entry point accepts both shapes.
 

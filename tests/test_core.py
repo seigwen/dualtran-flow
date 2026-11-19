@@ -31,6 +31,12 @@ def test_payload_names_the_target_language():
     assert "zh-CN" in payload["messages"][0]["content"]
     assert payload["messages"][1]["content"] == "Hello"
     assert payload["temperature"] == 0
+    assert "reasoning_effort" not in payload
+
+
+def test_payload_forwards_reasoning_effort():
+    payload = core.build_chat_payload("gpt-4o-mini", "Hello", "zh-CN", "high")
+    assert payload["reasoning_effort"] == "high"
 
 
 def test_parse_chat_response_reads_first_choice():
