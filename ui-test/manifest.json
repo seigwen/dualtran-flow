@@ -1,0 +1,205 @@
+{
+  "host": "dualtran-flow",
+  "version": "0.1.0",
+  "adapter": "windowsGui",
+  "adapterConfig": {
+    "windowTitle": "Flow.Launcher",
+    "focusOnStart": false
+  },
+  "surfaces": [
+    {
+      "id": "launcher.overlay",
+      "kind": "state",
+      "label": "Flow search overlay",
+      "location": "Global hotkey Alt+F1 (actual Settings.json Hotkey; not Alt+Space)",
+      "expected": [
+        "overlay opens with foreground Flow.Launcher",
+        "search box receives typed query"
+      ]
+    },
+    {
+      "id": "launcher.plugin",
+      "kind": "state",
+      "label": "DualTran result row",
+      "location": "Flow result list for action keyword dt",
+      "expected": [
+        "Type text to translate… result row when no query text"
+      ]
+    },
+    {
+      "id": "launcher.translation",
+      "kind": "state",
+      "label": "Translated result row",
+      "location": "Flow result list for dt <text>",
+      "expected": [
+        "Chinese translation displayed as result title"
+      ]
+    },
+    {
+      "id": "launcher.targetLanguage",
+      "kind": "state",
+      "label": "Result subtitle target language",
+      "location": "Flow result subtitle",
+      "expected": [
+        "zh-CN shown in subtitle"
+      ]
+    },
+    {
+      "id": "settings.provider",
+      "kind": "select",
+      "label": "AI provider",
+      "location": "No DualTran settings UI in Flow Launcher",
+      "expected": [
+        "provider control"
+      ]
+    },
+    {
+      "id": "settings.targetLanguage",
+      "kind": "select",
+      "label": "Target language dropdown",
+      "location": "No DualTran settings UI in Flow Launcher",
+      "expected": [
+        "target language control"
+      ]
+    },
+    {
+      "id": "settings.model",
+      "kind": "select",
+      "label": "Model",
+      "location": "No DualTran settings UI in Flow Launcher",
+      "expected": [
+        "model control"
+      ]
+    },
+    {
+      "id": "settings.endpoint",
+      "kind": "input",
+      "label": "API endpoint",
+      "location": "No DualTran settings UI in Flow Launcher",
+      "expected": [
+        "endpoint control"
+      ]
+    },
+    {
+      "id": "settings.reasoning",
+      "kind": "select",
+      "label": "Reasoning effort",
+      "location": "No DualTran settings UI in Flow Launcher",
+      "expected": [
+        "reasoning control"
+      ]
+    },
+    {
+      "id": "settings.apiKey",
+      "kind": "input",
+      "label": "API key",
+      "location": "Flow Launcher → Settings → Plugins → DualTran Translate → expanded row"
+    }
+  ],
+  "functions": [
+    {
+      "id": "launcher.open",
+      "label": "Open Flow Launcher via hotkey",
+      "entry": "Alt+F1 (actual configured Hotkey)",
+      "expected": "foreground Flow.Launcher search overlay"
+    },
+    {
+      "id": "launcher.query",
+      "label": "Query and translate with dt",
+      "entry": "Type dt <text> in Flow search box",
+      "expected": "plugin result row appears"
+    }
+  ],
+  "rubrics": {
+    "flow-settings-baseline": {
+      "hard": [
+        {
+          "id": "overlay_visible",
+          "question": "Is the Flow Launcher search overlay visible with the query box in the foreground?",
+          "expected": true
+        },
+        {
+          "id": "plugin_loaded",
+          "question": "Does the result list show the DualTran plugin row 'Type text to translate…' with subtitle 'e.g. dt hello world'?",
+          "expected": true
+        },
+        {
+          "id": "no_raw_sentinel_or_error",
+          "question": "Is the overlay free of raw sentinels, tracebacks, or visible errors?",
+          "expected": true
+        }
+      ],
+      "soft": []
+    },
+    "flow-settings-configured": {
+      "hard": [
+        {
+          "id": "overlay_visible",
+          "question": "Is the Flow Launcher search overlay visible with the query box in the foreground?",
+          "expected": true
+        },
+        {
+          "id": "translation_chinese",
+          "question": "Does the result row show the Chinese translation '你好' or '早上好' for the typed English query?",
+          "expected": true
+        },
+        {
+          "id": "target_zh_cn",
+          "question": "Does the result subtitle contain zh-CN?",
+          "expected": true
+        },
+        {
+          "id": "engine_ai",
+          "question": "Does the result subtitle contain ai?",
+          "expected": true
+        },
+        {
+          "id": "no_raw_sentinel_or_error",
+          "question": "Is the overlay free of raw sentinels, tracebacks, or visible errors?",
+          "expected": true
+        }
+      ],
+      "soft": []
+    },
+    "flow-settings-ui": {
+      "hard": [
+        {
+          "id": "engine_visible",
+          "question": "Is an Engine row with a google/ai choice visible in the expanded DualTran settings?",
+          "expected": true
+        },
+        {
+          "id": "target_visible",
+          "question": "Is a Target language row with a concrete value visible?",
+          "expected": true
+        },
+        {
+          "id": "endpoint_model_visible",
+          "question": "Are the API endpoint and Model rows visible?",
+          "expected": true
+        },
+        {
+          "id": "api_key_visible",
+          "question": "Is an API key field visible (it may be empty, but the label must be there)?",
+          "expected": true
+        },
+        {
+          "id": "reasoning_visible",
+          "question": "Is a Reasoning effort row with a lowest/low/medium/high choice visible?",
+          "expected": true
+        },
+        {
+          "id": "no_raw_error",
+          "question": "Is the panel free of a stack trace, raw YAML/JSON, or 'error creating setting panel' message?",
+          "expected": true
+        }
+      ],
+      "soft": []
+    }
+  },
+  "scenarios": [
+    "flow-settings-baseline",
+    "flow-settings-configured",
+    "flow-settings-ui"
+  ]
+}

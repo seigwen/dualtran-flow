@@ -1,0 +1,144 @@
+{
+  "id": "flow-settings-ui",
+  "host": "dualtran-flow",
+  "axis": "settings-ui",
+  "covers": [
+    "settings.provider",
+    "settings.targetLanguage",
+    "settings.model",
+    "settings.endpoint",
+    "settings.apiKey",
+    "settings.reasoning"
+  ],
+  "actions": [
+    {
+      "type": "key",
+      "key": "27"
+    },
+    {
+      "type": "wait",
+      "ms": 500
+    },
+    {
+      "type": "key",
+      "key": "27"
+    },
+    {
+      "type": "wait",
+      "ms": 500
+    },
+    {
+      "type": "key",
+      "key": "18 down"
+    },
+    {
+      "type": "key",
+      "key": "112"
+    },
+    {
+      "type": "key",
+      "key": "18 up"
+    },
+    {
+      "type": "wait",
+      "ms": 1200
+    },
+    {
+      "type": "type",
+      "text": "settings"
+    },
+    {
+      "type": "wait",
+      "ms": 1800
+    },
+    {
+      "type": "clickAt",
+      "x": 798,
+      "y": 302
+    },
+    {
+      "type": "wait",
+      "ms": 4000
+    },
+    {
+      "type": "assertForeground",
+      "title": "设置"
+    },
+    {
+      "type": "clickAt",
+      "x": 408,
+      "y": 291
+    },
+    {
+      "type": "wait",
+      "ms": 2000
+    },
+    {
+      "type": "clickAt",
+      "x": 1240,
+      "y": 144
+    },
+    {
+      "type": "wait",
+      "ms": 600
+    },
+    {
+      "type": "key",
+      "key": "17 down"
+    },
+    {
+      "type": "key",
+      "key": "65"
+    },
+    {
+      "type": "key",
+      "key": "17 up"
+    },
+    {
+      "type": "type",
+      "text": "DualTran"
+    },
+    {
+      "type": "wait",
+      "ms": 1800
+    },
+    {
+      "type": "clickAt",
+      "x": 901,
+      "y": 214
+    },
+    {
+      "type": "key",
+      "key": "39"
+    },
+    {
+      "type": "wait",
+      "ms": 800
+    },
+    {
+      "type": "wait",
+      "ms": 2000
+    },
+    {
+      "type": "screenshot",
+      "name": "flow-settings-ui",
+      "rubric": "flow-settings-ui"
+    },
+    {
+      "type": "key",
+      "key": "18 down"
+    },
+    {
+      "type": "key",
+      "key": "115"
+    },
+    {
+      "type": "key",
+      "key": "18 up"
+    },
+    {
+      "type": "wait",
+      "ms": 1500
+    }
+  ]
+}

@@ -1,0 +1,50 @@
+{
+  "id": "flow-settings-baseline",
+  "host": "dualtran-flow",
+  "axis": "baseline",
+  "covers": [
+    "launcher.overlay",
+    "launcher.plugin",
+    "launcher.open",
+    "launcher.query"
+  ],
+  "actions": [
+    {
+      "type": "key",
+      "key": "18 down"
+    },
+    {
+      "type": "key",
+      "key": "112 down"
+    },
+    {
+      "type": "key",
+      "key": "112 up"
+    },
+    {
+      "type": "key",
+      "key": "18 up"
+    },
+    {
+      "type": "wait",
+      "ms": 800
+    },
+    {
+      "type": "assertForeground",
+      "title": "Flow.Launcher"
+    },
+    {
+      "type": "type",
+      "text": "dt"
+    },
+    {
+      "type": "wait",
+      "ms": 1800
+    },
+    {
+      "type": "screenshot",
+      "name": "flow-settings-baseline",
+      "rubric": "flow-settings-baseline"
+    }
+  ]
+}

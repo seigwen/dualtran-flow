@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "surfaces": [
+    "launcher.overlay",
+    "launcher.plugin",
+    "launcher.targetLanguage",
+    "launcher.translation",
+    "settings.apiKey",
+    "settings.endpoint",
+    "settings.model",
+    "settings.provider",
+    "settings.reasoning",
+    "settings.targetLanguage"
+  ],
+  "functions": [
+    "launcher.open",
+    "launcher.query"
+  ],
+  "scenarios": [
+    "flow-settings-baseline",
+    "flow-settings-configured",
+    "flow-settings-ui"
+  ],
+  "digest": "sha256:db986b7771d4630a26cd9574d716e0f6c97bc53eca51f1965d64291a45ff99ad"
+}
