@@ -1,0 +1,9 @@
+{
+  "name": "dualtran-flow-conformance",
+  "private": true,
+  "version": "0.3.0",
+  "scripts": {
+    "conformance": "node scripts/conformance/run.mjs",
+    "conformance:negative": "node scripts/conformance/negative-control.mjs build/conformance/payload.json"
+  }
+}

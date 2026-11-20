@@ -16,16 +16,40 @@ translation and Enter copies it.
 
 ## Configure
 
-Open **Flow Launcher → Settings → Plugins → DualTran Translate**. The plugin ships a
-`SettingsTemplate.yaml`, so Flow renders Engine, Target language, API endpoint, API key, Model
-and Reasoning effort. Values are passed in the JSON-RPC request and take precedence over the
-legacy `settings.json` (kept as a fallback for older Flow builds and headless tests).
+Settings now live in the plugin's own window:
+
+- Type **`dt settings`** in Flow, or
+- choose **DualTran: Settings** from the `dt` result list.
+
+The window opens under `pythonw.exe` (no console), and saves `settings.json` inside the plugin
+directory. The old host-rendered `SettingsTemplate.yaml` was retired because Flow's template
+cannot express a non-selectable empty provider placeholder or plugin-localized settings text.
+Existing settings are migrated on first launch: human-readable target labels become BCP-47
+codes, the old `Select a provider` value becomes the empty provider, and model/provider/reasoning
+values are preserved. A `settings.json.legacy.bak` is written before migration.
+
+## Conformance (SPEC 2.1)
+
+```bash
+python -m pytest -q             # unit + migration + i18n tests
+npm run conformance             # real settings model -> validate.mjs
+npm run conformance:negative    # proves R2/R4/R5 can fail
+```
+
+The `Conformance` workflow is the required check. It reads the same `settings_model.py`,
+`builtin-providers.json`, 38 locale files and `settings_window.py` used by the product, not a
+hand-written passing payload.
 
 ## Status
 
-- 16 unit tests (`python -m pytest`), and the JSON-RPC contract is exercised directly:
-  `echo '{"method":"query","parameters":[""],"id":1}' | python main.py` returns a valid result.
-- Verified inside Flow Launcher 2.1.4 on Windows: the plugin loads, `dt good morning` returns `早上好`, and Enter copies it. Flow Launcher passes the JSON request in `argv[1]` (not stdin); the entry point accepts both shapes.
+- 22 unit/migration/i18n tests (`python -m pytest`), and the JSON-RPC contract is exercised
+  directly: `python main.py '{"method":"query","parameters":[""]}'` returns the translate prompt
+  plus the `DualTran: Settings` entry.
+- Verified inside Flow Launcher 2.1.4 on Windows: the provider list has no selectable placeholder
+  row, the Tk window saves and reopens Anthropic / Claude Opus 4.1 / endpoint without a console,
+  and `dt good morning` returns `早上好`.
+- Flow Launcher passes the JSON request in `argv[1]` (not stdin); the entry point accepts both
+  shapes.
 
 ## Licence
 

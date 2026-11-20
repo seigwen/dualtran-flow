@@ -1,0 +1,26 @@
+name: Conformance
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Unit tests and migration tests
+        run: python -m pytest -q
+      - name: SPEC 2.1 conformance
+        run: npm run conformance
+      - name: Negative controls (the gate must be able to fail)
+        run: npm run conformance:negative

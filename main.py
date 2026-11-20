@@ -1,78 +1,79 @@
 """Flow Launcher entry point.
 
 Flow Launcher talks JSON-RPC over stdin/stdout: it sends a request object and expects a single
-JSON line back. The plugin translates whatever the user typed after the action keyword and
-returns one result whose title is the translation; pressing Enter copies it to the clipboard.
+JSON line back. Settings are owned by the plugin now (the host SettingsTemplate was retired);
+the `DualTran: Settings` result opens the Tk window under pythonw.
 """
-
 from __future__ import annotations
 
 import json
 import os
+import subprocess
 import sys
 import traceback
 
+import i18n
+import settings_model
 from dualtran_core import TranslationError, translate
 
 SETTINGS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings.json")
-DEFAULTS = {
-    "engine": "google",
-    "target": "zh-CN",
-    "endpoint": "",
-    "api_key": "",
-    "model": "",
-    "provider": "Select a provider",
-    "reasoning": "lowest",
-}
-
-CATALOG_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "catalog.json")
-try:
-    with open(CATALOG_FILE, encoding="utf-8") as _handle:
-        _catalog = json.load(_handle)
-    PROVIDERS = {item["label"]: item for item in _catalog.get("providers", [])}
-except (FileNotFoundError, json.JSONDecodeError):
-    PROVIDERS = {}
-
-
-def _language_code(value: str) -> str:
-    value = (value or "").strip()
-    if "(" in value and value.endswith(")"):
-        return value[value.rfind("(") + 1 : -1]
-    return value
+DEFAULTS = settings_model.DEFAULTS
 
 
 def resolve_settings(settings: dict) -> dict:
-    """Turn the human-readable dropdown labels into the values the request needs."""
+    """Normalize stored values to the contract the request layer needs."""
     resolved = dict(settings)
-    resolved["target"] = _language_code(str(resolved.get("target") or "zh-CN"))
-    provider = PROVIDERS.get(str(resolved.get("provider") or ""))
+    resolved["target"] = settings_model.normalize_target(resolved.get("target"))
+    provider_id = settings_model.normalize_provider(resolved.get("provider"))
+    resolved["provider"] = provider_id
+    provider = settings_model.provider_by_id(provider_id)
     if provider:
         if not str(resolved.get("endpoint") or "").strip():
             resolved["endpoint"] = provider["endpoint"]
-        model_label = str(resolved.get("model") or "")
-        model = next((m for m in provider["models"] if m["label"] == model_label), None)
-        if model is None and provider["models"]:
-            model = provider["models"][0]
-        if model is not None:
-            resolved["model"] = model["id"]
+        resolved["model"] = settings_model.normalize_model(provider_id, resolved.get("model"))
+        resolved["reasoning"] = settings_model.resolve_reasoning(
+            str(resolved.get("reasoning") or "lowest"),
+            settings_model.reasoning_options(provider_id, resolved["model"]),
+        )
     return resolved
 
 
 def load_settings(overrides: dict | None = None) -> dict:
-    settings = dict(DEFAULTS)
-    try:
-        with open(SETTINGS_FILE, encoding="utf-8") as handle:
-            settings.update(json.load(handle))
-    except (FileNotFoundError, json.JSONDecodeError):
-        pass
-    # Flow Launcher passes the values from SettingsTemplate.yaml in the JSON-RPC
-    # request. They win over the legacy settings.json so the new settings page is
-    # the single source of truth; settings.json stays as a fallback for older
-    # Flow versions and for headless tests.
-    for key in DEFAULTS:
-        if isinstance(overrides, dict) and key in overrides:
-            settings[key] = overrides[key]
+    settings = settings_model.load_settings(SETTINGS_FILE)
+    if isinstance(overrides, dict):
+        migrated = settings_model.migrate_legacy_settings(overrides)
+        for key in DEFAULTS:
+            if key in overrides:
+                settings[key] = migrated[key]
     return settings
+
+
+def settings_result() -> dict:
+    return {
+        "Title": i18n.t("settingsCommand"),
+        "SubTitle": i18n.t("settingsSubtitle"),
+        "IcoPath": "icon.png",
+        "JsonRPCAction": {"method": "open_settings", "parameters": []},
+    }
+
+
+def open_settings() -> bool:
+    """Spawn the Tk window with pythonw so Flow never flashes a console."""
+    executable = os.path.join(os.path.dirname(sys.executable), "pythonw.exe")
+    if not os.path.exists(executable):
+        executable = sys.executable
+    script = os.path.join(os.path.dirname(os.path.abspath(__file__)), "settings_window.py")
+    try:
+        flags = getattr(subprocess, "CREATE_NO_WINDOW", 0x08000000)
+        subprocess.Popen(
+            [executable, script],
+            cwd=os.path.dirname(script),
+            creationflags=flags,
+            close_fds=True,
+        )
+        return True
+    except Exception:
+        return False
 
 
 def query(text: str, settings: dict | None = None) -> list[dict]:
@@ -80,11 +81,14 @@ def query(text: str, settings: dict | None = None) -> list[dict]:
     if not cleaned:
         return [
             {
-                "Title": "Type text to translate…",
-                "SubTitle": "e.g. dt hello world",
+                "Title": i18n.t("emptyQuery"),
+                "SubTitle": i18n.t("emptyQuerySubtitle"),
                 "IcoPath": "icon.png",
-            }
+            },
+            settings_result(),
         ]
+    if cleaned.lower() in {"settings", "config", "configure"}:
+        return [settings_result()]
 
     settings = resolve_settings(settings or load_settings())
     try:
@@ -95,10 +99,10 @@ def query(text: str, settings: dict | None = None) -> list[dict]:
             endpoint=settings["endpoint"],
             api_key=settings["api_key"],
             model=settings["model"],
-            reasoning=settings.get("reasoning", "lowest"),
+            reasoning=settings["reasoning"],
         )
     except TranslationError as error:
-        return [{"Title": "Translation failed", "SubTitle": str(error), "IcoPath": "icon.png"}]
+        return [{"Title": i18n.t("translationFailed"), "SubTitle": str(error), "IcoPath": "icon.png"}]
 
     return [
         {
@@ -136,12 +140,14 @@ def dispatch(request: dict) -> dict:
             )
         elif method == "copy_to_clipboard":
             payload = copy_to_clipboard(parameters[0] if parameters else "")
+        elif method == "open_settings":
+            payload = open_settings()
         else:
             payload = []
     except Exception:
         payload = [
             {
-                "Title": "DualTran error",
+                "Title": i18n.t("translationFailed"),
                 "SubTitle": traceback.format_exc(limit=1).strip().replace("\n", " "),
                 "IcoPath": "icon.png",
             }
@@ -155,6 +161,11 @@ def emit(request: dict) -> None:
 
 
 def main() -> None:
+    # Migrate the old host-driven settings once, before the first query reads them.
+    try:
+        settings_model.migrate_settings_file(SETTINGS_FILE)
+    except Exception:
+        pass
     # Flow Launcher launches a Python plugin with the JSON request as argv[1]
     # (not on stdin). Accept both shapes: the argv form is what the host uses,
     # the stdin form keeps the documented JSON-RPC contract and unit tests.

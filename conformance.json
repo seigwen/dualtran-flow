@@ -1,0 +1,19 @@
+{
+  "spec": "2.1.0",
+  "host": "dualtran-flow",
+  "payloadCommand": "bash scripts/conformance/payload.sh",
+  "static": {
+    "files": [
+      "main.py",
+      "settings_model.py",
+      "settings_window.py"
+    ],
+    "patterns": [
+      "providerSeparator",
+      "__separator__",
+      "__more__",
+      "More (models.dev)"
+    ]
+  },
+  "platformLimits": []
+}
